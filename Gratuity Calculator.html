@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gratuity Calculator</title>
+<style>
+  :root {
+    --ink: #1F3A5F;
+    --paper: #FBFCFD;
+    --green: #2E7D5B;
+    --slate: #5B6B7C;
+    --line: #DDE3EA;
+    --amber: #9A5B13;
+    --amber-bg: #FFF6E8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #EEF2F6;
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
+    display: flex;
+    justify-content: center;
+    padding: 40px 16px;
+    min-height: 100vh;
+  }
+  main {
+    width: 100%;
+    max-width: 520px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  header { padding: 28px 28px 8px; }
+  h1 {
+    margin: 0 0 4px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 400;
+    font-size: 2rem;
+    letter-spacing: -0.01em;
+  }
+  header p { margin: 0; color: var(--slate); font-size: 0.95rem; }
+
+  .inputs { padding: 20px 28px 8px; display: grid; gap: 18px; }
+  label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 6px; }
+  .hint { font-weight: 400; color: var(--slate); }
+  .field {
+    display: flex; align-items: center;
+    border: 1px solid #C7D0DA; border-radius: 4px; background: #fff;
+  }
+  .field:focus-within { border-color: var(--ink); outline: 2px solid rgba(31,58,95,.25); outline-offset: 1px; }
+  .prefix { padding: 0 0 0 12px; color: var(--slate); font-size: 1.05rem; }
+  select {
+    border: 0; outline: 0; background: transparent; width: 100%;
+    padding: 12px; font-size: 1rem; color: var(--ink); font-family: inherit;
+  }
+  input {
+    border: 0; outline: 0; background: transparent; width: 100%;
+    padding: 12px; font-size: 1.05rem; color: var(--ink); font-family: inherit;
+  }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  .result {
+    margin-top: 20px;
+    padding: 24px 28px 28px;
+    border-top: 1px dashed var(--line);
+    background: #fff;
+  }
+  .amount {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(2.2rem, 9vw, 3rem);
+    color: var(--green);
+    margin: 0;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+  .amount.empty { color: #A9B4C0; }
+  .caption { color: var(--slate); font-size: 0.9rem; margin: 4px 0 18px; }
+
+  .working {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.05rem;
+    border-left: 3px solid var(--ink);
+    padding: 6px 0 6px 14px;
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .working small { display: block; font-family: system-ui, sans-serif; color: var(--slate); font-size: 0.82rem; margin-top: 4px; }
+
+  .notice {
+    margin-top: 16px; padding: 10px 12px; border-radius: 4px;
+    background: var(--amber-bg); color: var(--amber); font-size: 0.88rem;
+    display: none;
+  }
+  .notice.show { display: block; }
+
+  footer {
+    padding: 16px 28px 24px; font-size: 0.8rem; color: var(--slate);
+    border-top: 1px solid var(--line);
+  }
+  footer p { margin: 0 0 6px; }
+
+  @media (max-width: 420px) {
+    header, .inputs, .result, footer { padding-left: 18px; padding-right: 18px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Gratuity calculator</h1>
+    <p>Estimate your gratuity under the Payment of Gratuity Act, 1972 and the Code on Social Security, 2020 (in force from 21 November 2025).</p>
+  </header>
+
+  <section class="inputs">
+    <div>
+      <label for="salary">Monthly wages <span class="hint">(last drawn; basic + DA + retaining allowance)</span></label>
+      <div class="field">
+        <span class="prefix">₹</span>
+        <input id="salary" type="text" inputmode="numeric" placeholder="50,000" autocomplete="off">
+      </div>
+    </div>
+    <div>
+      <label for="etype">Type of employment</label>
+      <div class="field">
+        <select id="etype">
+          <option value="regular">Permanent / regular (5-year rule)</option>
+          <option value="fixed">Fixed-term contract (1-year rule, pro rata)</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label for="years">Years completed</label>
+        <div class="field"><input id="years" type="number" min="0" max="60" step="1" placeholder="10"></div>
+      </div>
+      <div>
+        <label for="months">Extra months <span class="hint">(optional)</span></label>
+        <div class="field"><input id="months" type="number" min="0" max="11" step="1" placeholder="0"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="result" aria-live="polite">
+    <p class="amount empty" id="amount">₹0</p>
+    <p class="caption" id="caption">Enter your salary and years of service.</p>
+    <p class="working" id="working">(15 × wages × years) ÷ 26
+      <small>15 days' wages for each completed year, based on a 26-day working month.</small>
+    </p>
+    <div class="notice" id="notice"></div>
+  </section>
+
+  <footer>
+    <p><strong>Wages:</strong> Under the new definition of "wages" in the labour codes, certain allowances can be counted, and excluded components are generally limited to 50% of total remuneration. If your "basic + DA" is less than half of your total pay, your gratuity wage base may be higher than your basic. Check with your employer how wages are defined in your payroll.</p>
+    <p><strong>Eligibility:</strong> Permanent employees generally need 5 years of continuous service (exceptions apply on death or disablement). Fixed-term employees directly engaged by the employer are eligible after 1 year of service under the contract, on a pro-rata basis. Service of more than 6 months in the final year is rounded up to a full year.</p>
+    <p><strong>Scope:</strong> The (15 × wages × years) ÷ 26 formula applies to employees covered by the Act or Code. Seasonal establishments and employers outside its scope use different methods (for example, seasonal employees are computed on a different day-rate). Service before 21 November 2025 and the rules of your state may affect your case.</p>
+    <p><strong>Ceiling:</strong> ₹20,00,000, as last notified; this limit can be revised by the government.</p>
+    <p>This is an estimate for general information only. It is not legal, tax or financial advice. Your final settlement is determined by your employer; consult a qualified professional for your situation.</p>
+  </footer>
+</main>
+
+<script>
+  const CAP = 2000000; // last notified statutory ceiling; update if revised
+  const fmt = n => '₹' + Math.round(n).toLocaleString('en-IN');
+  const salaryEl = document.getElementById('salary');
+  const yearsEl = document.getElementById('years');
+  const monthsEl = document.getElementById('months');
+  const etypeEl = document.getElementById('etype');
+  const amountEl = document.getElementById('amount');
+  const captionEl = document.getElementById('caption');
+  const workingEl = document.getElementById('working');
+  const noticeEl = document.getElementById('notice');
+
+  function parseSalary() {
+    const raw = salaryEl.value.replace(/[^\d.]/g, '');
+    return raw ? parseFloat(raw) : 0;
+  }
+
+  // Format salary with Indian grouping as the user types
+  salaryEl.addEventListener('input', () => {
+    const digits = salaryEl.value.replace(/[^\d]/g, '').slice(0, 10);
+    salaryEl.value = digits ? Number(digits).toLocaleString('en-IN') : '';
+    calc();
+  });
+  yearsEl.addEventListener('input', calc);
+  monthsEl.addEventListener('input', calc);
+  etypeEl.addEventListener('change', calc);
+
+  function showNotice(msg) {
+    noticeEl.textContent = msg;
+    noticeEl.classList.toggle('show', !!msg);
+  }
+
+  function calc() {
+    const salary = parseSalary();
+    const years = Math.max(0, Math.floor(parseFloat(yearsEl.value) || 0));
+    let months = Math.max(0, Math.floor(parseFloat(monthsEl.value) || 0));
+    if (months > 11) { months = 11; monthsEl.value = 11; }
+
+    const countedYears = years + (months > 6 ? 1 : 0);
+
+    if (!salary || (!years && !months)) {
+      amountEl.textContent = '₹0';
+      amountEl.classList.add('empty');
+      captionEl.textContent = 'Enter your salary and years of service.';
+      workingEl.innerHTML = '(15 × wages × years) ÷ 26<small>15 days\' wages for each completed year, based on a 26-day working month.</small>';
+      showNotice('');
+      return;
+    }
+
+    const raw = (15 * salary * countedYears) / 26;
+    const capped = Math.min(raw, CAP);
+
+    amountEl.textContent = fmt(capped);
+    amountEl.classList.remove('empty');
+    captionEl.textContent = `Estimated gratuity for ${countedYears} year${countedYears === 1 ? '' : 's'} of service`;
+
+    const roundNote = months > 6
+      ? `${years} yr ${months} mo rounded up to ${countedYears} years.`
+      : months > 0
+        ? `${months} extra month${months === 1 ? '' : 's'} not counted (6 months or less).`
+        : '15 days\' wages for each completed year, based on a 26-day working month.';
+
+    workingEl.innerHTML = `(15 × ${fmt(salary)} × ${countedYears}) ÷ 26 = ${fmt(raw)}<small>${roundNote}</small>`;
+
+    const notes = [];
+    const totalMonths = years * 12 + months;
+    if (etypeEl.value === 'fixed') {
+      if (totalMonths < 12) notes.push('Less than 1 year of service under the contract: gratuity is generally not payable for fixed-term employees.');
+      else notes.push('Fixed-term employees receive gratuity pro rata for the service actually rendered. Rules for fixed-term treatment are still evolving; confirm with your employer.');
+    } else if (totalMonths < 60) {
+      notes.push('Less than 5 years of service: gratuity is generally not payable, except on death or disablement.');
+    }
+    if (raw > CAP) notes.push(`The calculated amount exceeds the statutory ceiling, so it is capped at ${fmt(CAP)}.`);
+    showNotice(notes.join(' '));
+  }
+</script>
+</body>
+</html>
